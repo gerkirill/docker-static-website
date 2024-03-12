@@ -1,17 +1,11 @@
 # docker-static-website
 
-[![docker:lipanski/docker-static-website](https://img.shields.io/docker/v/lipanski/docker-static-website?logo=docker&label=lipanski%2Fdocker-static-website)](https://hub.docker.com/r/lipanski/docker-static-website/tags)
-
-A very small Docker image (~154KB) to run any static website, based on the [BusyBox httpd](https://www.busybox.net/) static file server.
-
-For more details, check out [my article](https://lipanski.com/posts/smallest-docker-image-static-website).
+A very small Docker image (~220KB) to run any static website, based on the [BusyBox httpd](https://www.busybox.net/) static file server. Suitable for single-page applications out of the box.
 
 ## Usage
 
-The image is hosted on [Docker Hub](https://hub.docker.com/r/lipanski/docker-static-website/tags) and comes with **linux/amd64** and **linux/arm64** builds:
-
 ```dockerfile
-FROM lipanski/docker-static-website:latest
+FROM gerkirill/docker-static-website:latest
 
 # Copy your static files
 COPY . .
@@ -34,12 +28,12 @@ Browse to `http://localhost:3000`.
 If you need to configure the server in a different way, you can override the `CMD` line:
 
 ```dockerfile
-FROM lipanski/docker-static-website:latest
+FROM gerkirill/docker-static-website:latest
 
 # Copy your static files
 COPY . .
 
-CMD ["/busybox", "httpd", "-f", "-v", "-p", "3000", "-c", "httpd.conf"]
+CMD ["httpd", "-f", "-v", "-p", "3000", "-c", "httpd.conf"]
 ```
 
 **NOTE:** Sending a `TERM` signal to your TTY running the container won't get propagated due to how busybox is built. Instead you can call `docker stop` (or `docker kill` if can't wait 15 seconds). Alternatively you can run the container with `docker run -it --rm --init` which will propagate signals to the process correctly.
@@ -110,7 +104,7 @@ Create a `docker-compose.yml` file:
 version: "3.9"
 services:
   webserver:
-    image: lipanski/docker-static-website:latest
+    image: gerkirill/docker-static-website:latest
     restart: always
     ports:
       - "3000:3000"
@@ -150,14 +144,14 @@ Browse to `http://localhost:3000` and check that the contents of the `index.html
 Build the image:
 
 ```
-docker build -t lipanski/docker-static-website:1.2.3 -t lipanski/docker-static-website:latest .
+docker build -t gerkirill/docker-static-website:1.2.3 -t gerkirill/docker-static-website:latest .
 ```
 
 Push the image to Docker Hub:
 
 ```
-docker push lipanski/docker-static-website:1.2.3
-docker push lipanski/docker-static-website:latest
+docker push gerkirill/docker-static-website:1.2.3
+docker push gerkirill/docker-static-website:latest
 ```
 
 Tag the release:
@@ -166,5 +160,3 @@ Tag the release:
 git tag 1.2.3
 git push --tags
 ```
-
-

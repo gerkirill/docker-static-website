@@ -20,8 +20,13 @@ COPY .config .
 # Compile and install busybox
 RUN make && make install
 
-# Create a non-root user to own the files and run our server
-RUN adduser -D static
+# create httpd symlink as it is not created by the make
+RUN ln -s /bin/busybox /busybox/_install/bin/httpd
+# copy custom script for ENV export in JSON format
+COPY ./env2json.sh /busybox/_install/bin
+## symlink the .sh script so it is available w/o .sh
+RUN ln -s /bin/env2json.sh /busybox/_install/bin/env2json
+
 
 # Switch to the scratch image
 FROM scratch
@@ -29,25 +34,31 @@ FROM scratch
 EXPOSE 3000
 
 # Copy over the user
-COPY --from=builder /etc/passwd /etc/passwd
+# COPY --from=builder /etc/passwd /etc/passwd
 
-# Copy the busybox static binary
-COPY --from=builder /busybox/_install/bin/busybox /
+# Copy the busybox static binary and symlinks
+COPY --from=builder /busybox/_install/bin/ /bin/
+
+# Create a non-root user to own the files and run our server
+RUN ( echo "root:x:0:root" ; echo "static:x:1000:static" ) >> /etc/group
+RUN echo "static:x:1000:1000:static:/home/static:/bin/ash" >> /etc/passwd
+
+WORKDIR /home/static
+
+RUN chown static:static .
 
 # Use our non-root user
 USER static
-WORKDIR /home/static
 
 # Uploads a blank default httpd.conf
 # This is only needed in order to set the `-c` argument in this base file
 # and save the developer the need to override the CMD line in case they ever
 # want to use a httpd.conf
-COPY httpd.conf .
+COPY --chown=static:static httpd.conf .
 
 # Copy the static website
 # Use the .dockerignore file to control what ends up inside the image!
-# NOTE: Commented out since this will also copy the .config file
-# COPY . .
+COPY --chown=static:static ./static/ .
 
 # Run busybox httpd
-CMD ["/busybox", "httpd", "-f", "-v", "-p", "3000", "-c", "httpd.conf"]
+CMD ["ash", "-c", "env2json PUBLIC_ yes > environment.json && httpd -f -v -p 3000 -c httpd.conf"]
