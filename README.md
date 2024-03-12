@@ -8,7 +8,7 @@ A very small Docker image (~220KB) to run any static website, based on the [Busy
 FROM gerkirill/docker-static-website:latest
 
 # Copy your static files
-COPY . .
+COPY --chown=static:static . .
 ```
 
 Build the image:
